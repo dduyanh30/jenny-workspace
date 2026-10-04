@@ -1225,6 +1225,7 @@
         }
 
         function closeEmailAuthModal() {
+                if (!currentAuthUser) return;
                 const modal = document.getElementById('email-auth-modal');
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
@@ -1335,6 +1336,7 @@
                     currentAuthUser = user;
                 }
                 renderAuthButton();
+                if (!currentAuthUser) openEmailAuthModal('login');
                 await loadSharedWorkspace();
                 subscribeToSharedWorkspace();
             }
@@ -1342,8 +1344,11 @@
                 currentAuthUser = session?.user?.app_metadata?.provider === 'github' ? null : (session?.user || null);
                 renderAuthButton();
                 if (currentAuthUser) {
+                    closeEmailAuthModal();
                     loadSharedWorkspace();
                     subscribeToSharedWorkspace();
+                } else {
+                    openEmailAuthModal('login');
                 }
             });
         }
