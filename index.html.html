@@ -1273,13 +1273,34 @@
                 }
         }
 
+        async function clearLocalWorkspaceData() {
+            workspaceStorageKeys.forEach(key => localStorage.removeItem(key));
+            localStorage.removeItem('my_shared_workspace_version');
+            if (window.indexedDB) {
+                try {
+                    const database = await openTaskAttachmentDatabase();
+                    await new Promise((resolve, reject) => {
+                        const transaction = database.transaction('files', 'readwrite');
+                        transaction.objectStore('files').clear();
+                        transaction.oncomplete = resolve;
+                        transaction.onerror = () => reject(transaction.error || new Error('Không thể xóa file cục bộ.'));
+                    });
+                } catch (error) {
+                    console.error('Không thể xóa file đính kèm cục bộ:', error);
+                }
+            }
+        }
+
         async function signOut() {
             if (!supabaseClient) return;
             const { error } = await supabaseClient.auth.signOut();
             if (error) {
                 console.error('Đăng xuất thất bại:', error);
                 alert(`Đăng xuất thất bại: ${error.message}`);
+                return;
             }
+            await clearLocalWorkspaceData();
+            window.location.reload();
         }
 
         function renderAuthButton() {
