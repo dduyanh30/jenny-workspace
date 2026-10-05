@@ -1208,7 +1208,7 @@
                     <label for="schedule-room" class="mb-1 block text-xs font-semibold text-slate-700">Địa điểm / ghi chú</label>
                         <select id="task-priority" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
                     <option value="low">Ưu tiên Thấp</option>
-                            <option value="medium" selected>Ưu tiên vừa</option>
+                            <option value="medium" selected>Ưu tiên Vừa</option>
                     <option value="high">Ưu tiên Cao</option>
                         </select>
                     </div>
@@ -2441,9 +2441,9 @@
         }
 
         function taskPriorityMeta(task) {
-            if (task.priority === 'high') return { label: 'Ưu tiên cao', classes: 'bg-rose-100 text-rose-700' };
-            if (task.priority === 'medium') return { label: 'Ưu tiên vừa', classes: 'bg-amber-100 text-amber-800' };
-            return { label: 'Ưu tiên thấp', classes: 'bg-emerald-100 text-emerald-700' };
+            if (task.priority === 'high') return { label: 'Ưu tiên Cao', classes: 'bg-rose-100 text-rose-700' };
+            if (task.priority === 'medium') return { label: 'Ưu tiên Vừa', classes: 'bg-amber-100 text-amber-800' };
+            return { label: 'Ưu tiên Thấp', classes: 'bg-emerald-100 text-emerald-700' };
         }
 
         function sortTasksByPriorityAndDue(first, second) {
@@ -3124,7 +3124,7 @@
                     const remainingDays = startOfDueDate ? Math.round((startOfDueDate - startOfToday) / 86400000) : 0;
                     const upcomingLabel = !completed && remainingDays > 0 ? ` <span class="ml-1 text-[11px] font-medium text-slate-500">(Còn ${remainingDays} ngày)</span>` : '';
                     const completionAction = completed ? `restoreArchivedTask('${escapeHtml(task.id)}')` : `toggleTaskComplete('${escapeHtml(task.id)}')`;
-                    return `<article class="overview-kanban-card" draggable="true" onclick="openOverviewTask(event, '${escapeHtml(task.id)}')" ondragstart="startKanbanDrag(event, '${escapeHtml(task.id)}')" ondragend="endKanbanDrag(event)" title="Bấm để xem chi tiết hoặc kéo để chuyển bảng"><div class="flex items-start justify-between gap-1.5"><div class="flex min-w-0 flex-1 items-start gap-1.5"><input type="checkbox" ${completed ? 'checked' : ''} aria-label="${completed ? 'Khôi phục' : 'Hoàn thành'} ${escapeHtml(task.title)}" onchange="${completionAction}" class="mt-0.5 h-3 w-3 shrink-0 accent-blue-600"><div class="min-w-0 flex-1"><span class="block break-words text-[9px] font-semibold text-slate-800">${escapeHtml(task.title)}${upcomingLabel}${earlyCompletionNote}</span><time class="mt-0.5 block text-[8px] text-slate-500">Hạn: ${escapeHtml(dueLabel)}</time></div></div><button type="button" onclick="deleteTask('${escapeHtml(task.id)}')" aria-label="Xóa công việc ${escapeHtml(task.title)}" title="Xóa công việc" class="flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-rose-50 hover:text-rose-600"><i class="fa-regular fa-trash-can text-[9px]"></i></button></div>${renderTaskAttachmentLinks(task, true)}<div class="mt-2 flex items-center justify-between gap-1"><span class="max-w-[70%] truncate rounded px-1 py-0.5 text-[7px] font-semibold ${priorityClass}">${task.priority === 'high' ? 'Ưu tiên cao' : task.priority === 'medium' ? 'Ưu tiên vừa' : 'Ưu tiên thấp'}</span></div></article>`;
+                    return `<article class="overview-kanban-card" draggable="true" onclick="openOverviewTask(event, '${escapeHtml(task.id)}')" ondragstart="startKanbanDrag(event, '${escapeHtml(task.id)}')" ondragend="endKanbanDrag(event)" title="Bấm để xem chi tiết hoặc kéo để chuyển bảng"><div class="flex items-start justify-between gap-1.5"><div class="flex min-w-0 flex-1 items-start gap-1.5"><input type="checkbox" ${completed ? 'checked' : ''} aria-label="${completed ? 'Khôi phục' : 'Hoàn thành'} ${escapeHtml(task.title)}" onchange="${completionAction}" class="mt-0.5 h-3 w-3 shrink-0 accent-blue-600"><div class="min-w-0 flex-1"><span class="block break-words text-[9px] font-semibold text-slate-800">${escapeHtml(task.title)}${upcomingLabel}${earlyCompletionNote}</span><time class="mt-0.5 block text-[8px] text-slate-500">Hạn: ${escapeHtml(dueLabel)}</time></div></div><button type="button" onclick="deleteTask('${escapeHtml(task.id)}')" aria-label="Xóa công việc ${escapeHtml(task.title)}" title="Xóa công việc" class="flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-rose-50 hover:text-rose-600"><i class="fa-regular fa-trash-can text-[9px]"></i></button></div>${renderTaskAttachmentLinks(task, true)}<div class="mt-2 flex items-center justify-between gap-1"><span class="max-w-[70%] truncate rounded px-1 py-0.5 text-[7px] font-semibold ${priorityClass}">${task.priority === 'high' ? 'Ưu tiên Cao' : task.priority === 'medium' ? 'Ưu tiên Vừa' : 'Ưu tiên Thấp'}</span></div></article>`;
                 }).join('') : '<p class="py-3 text-center text-[8px] text-slate-500">Chưa có việc</p>';
             };
             renderTaskCards(todoTasks, 'overview-todo-list', false);
@@ -3646,7 +3646,7 @@
                     } else if (task.priority === 'medium') {
                         priorityBadge = `<span class="px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full">Ưu tiên Vừa</span>`;
                     } else {
-                        priorityBadge = `<span class="px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full">Thấp</span>`;
+                        priorityBadge = `<span class="px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full">Ưu tiên Thấp</span>`;
                     }
                     const taskCategory = categories.find(category => category.id === task.categoryId);
                     const categoryBadge = taskCategory ? `<span class="rounded-md border px-2 py-0.5 text-[10px] font-semibold ${categoryColorClasses(taskCategory.color)}">${escapeHtml(taskCategory.name)}</span>` : '';
