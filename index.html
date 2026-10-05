@@ -954,14 +954,16 @@
 
         <section id="archive-view" class="hidden flex-col gap-5">
             <div><h2 class="text-lg font-bold text-slate-800">Lưu trữ</h2><p class="mt-1 text-xs text-slate-500">Các công việc đã hoàn thành cùng đầy đủ thông tin.</p></div>
+            <div id="archive-summary" class="flex flex-wrap items-center gap-2 text-xs"></div>
             <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-                <table class="min-w-[900px] w-full border-collapse text-left text-sm">
+                <table class="min-w-[1040px] w-full border-collapse text-left text-sm">
                     <thead class="bg-slate-50 text-xs uppercase text-slate-500">
                         <tr>
                             <th class="px-4 py-3 font-semibold">Công việc</th>
+                            <th class="px-4 py-3 font-semibold">Ưu tiên</th>
                             <th class="px-4 py-3 font-semibold">Nội dung</th>
                             <th class="px-4 py-3 font-semibold">Hạn</th>
-                            <th class="px-4 py-3 font-semibold">Ngày hoàn thành</th>
+                            <th class="px-4 py-3 font-semibold">Hoàn thành lúc</th>
                             <th class="px-4 py-3 font-semibold">Tệp đính kèm</th>
                             <th class="px-4 py-3 text-right font-semibold">Thao tác</th>
                         </tr>
@@ -1205,7 +1207,7 @@
                         </div>
                     </div>
                     <div class="sm:col-span-2">
-                    <label for="schedule-room" class="mb-1 block text-xs font-semibold text-slate-700">Địa điểm / ghi chú</label>
+                    <label for="schedule-room" class="mb-1 block text-xs font-semibold text-slate-700">Mức độ ưu tiên</label>
                         <select id="task-priority" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
                     <option value="low">Ưu tiên Thấp</option>
                             <option value="medium" selected>Ưu tiên Vừa</option>
@@ -2441,15 +2443,56 @@
         }
 
         function taskPriorityMeta(task) {
-            if (task.priority === 'high') return { label: 'Ưu tiên Cao', classes: 'bg-rose-100 text-rose-700' };
-            if (task.priority === 'medium') return { label: 'Ưu tiên Vừa', classes: 'bg-amber-100 text-amber-800' };
-            return { label: 'Ưu tiên Thấp', classes: 'bg-emerald-100 text-emerald-700' };
+            if (task.priority === 'high') return { label: 'Ưu tiên Cao', classes: 'bg-rose-100 text-rose-700', accent: 'border-l-rose-500' };
+            if (task.priority === 'medium') return { label: 'Ưu tiên Vừa', classes: 'bg-amber-100 text-amber-800', accent: 'border-l-amber-400' };
+            return { label: 'Ưu tiên Thấp', classes: 'bg-emerald-100 text-emerald-700', accent: 'border-l-emerald-500' };
         }
 
         function sortTasksByPriorityAndDue(first, second) {
             const priorityDifference = taskPriorityRank(first) - taskPriorityRank(second);
             if (priorityDifference !== 0) return priorityDifference;
             return new Date(first.dueDate) - new Date(second.dueDate);
+        }
+
+        // Công việc đã hoàn thành: ưu tiên cao -> thấp, cùng mức thì việc mới hoàn thành xếp trước
+        function sortArchivedTasks(first, second) {
+            const priorityDifference = taskPriorityRank(first) - taskPriorityRank(second);
+            if (priorityDifference !== 0) return priorityDifference;
+            return new Date(second.completedAt || 0) - new Date(first.completedAt || 0);
+        }
+
+        // Định dạng ngày giờ dùng chung cho Tổng quan / Công việc / Lưu trữ: dd/MM/yyyy · HH:mm
+        function formatTaskDateTimeParts(value) {
+            const date = value ? new Date(value) : null;
+            if (!date || Number.isNaN(date.getTime())) return null;
+            const day = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const time = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            return {
+                date: day,
+                time,
+                weekday: date.toLocaleDateString('vi-VN', { weekday: 'long' }),
+                text: `${day} · ${time}`
+            };
+        }
+
+        function formatTaskDateTimeShort(value) {
+            return formatTaskDateTimeParts(value)?.text || null;
+        }
+
+        // Trạng thái hoàn thành so với hạn: xong trước hạn / đúng hạn / trễ hạn
+        function archiveCompletionStatus(task) {
+            const completedAt = new Date(task.completedAt);
+            const due = new Date(task.dueDate);
+            if (!task.completedAt || !task.dueDate || Number.isNaN(completedAt.getTime()) || Number.isNaN(due.getTime())) return null;
+            if (completedAt.getTime() < due.getTime()) return { label: 'Xong trước hạn', classes: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: 'fa-circle-check' };
+            if (completedAt.getTime() === due.getTime()) return { label: 'Đúng hạn', classes: 'bg-sky-50 text-sky-700 border-sky-200', icon: 'fa-circle-check' };
+            return { label: 'Hoàn thành trễ', classes: 'bg-rose-50 text-rose-700 border-rose-200', icon: 'fa-clock' };
+        }
+
+        function renderArchiveDateCell(value, emptyText, valueClass) {
+            const parts = formatTaskDateTimeParts(value);
+            if (!parts) return `<span class="text-xs text-slate-400">${escapeHtml(emptyText)}</span>`;
+            return `<div class="font-semibold ${valueClass}">${parts.date}</div><div class="mt-0.5 flex items-center gap-1 text-xs text-slate-500"><i class="fa-regular fa-clock"></i><span>${parts.time}</span><span class="capitalize">· ${escapeHtml(parts.weekday)}</span></div>`;
         }
 
         const dailyQuotes = [
