@@ -660,7 +660,7 @@
                 <button id="email-auth-button" onclick="openEmailAuthModal('login')" 
                         class="flex items-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50">
                     <i class="fa-regular fa-envelope mr-2 text-sm"></i>
-                    <span>ĐĒng nhập email</span>
+                    <span>Đăng nhập email</span>
                 </button>
             </div>
         </div>
@@ -678,7 +678,7 @@
                 <input id="email-auth-email" type="text" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_.\-]+" autocomplete="username" placeholder="Username" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
                 <input id="email-auth-password" type="password" required minlength="6" autocomplete="current-password" placeholder="Mật khẩu (ít nhất 6 ký tự)" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
                 <p id="email-auth-error" class="hidden text-xs font-medium text-rose-600"></p>
-                <button id="email-auth-submit" type="submit" class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">ĐĒng nhập</button>
+                <button id="email-auth-submit" type="submit" class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">Đăng nhập</button>
                 <button id="email-auth-switch" type="button" onclick="toggleEmailAuthMode()" class="w-full text-xs font-medium text-blue-600 hover:text-blue-700">Chưa có tài khoản? ĐĒng ký</button>
             </form>
         </div>
@@ -1359,9 +1359,9 @@
 
         function updateEmailAuthModal() {
                 const isLogin = emailAuthMode === 'login';
-                document.getElementById('email-auth-title').textContent = isLogin ? 'ĐĒng nhập bằng username' : 'Tạo tài khoản riêng';
-                document.getElementById('email-auth-submit').textContent = isLogin ? 'ĐĒng nhập' : 'ĐĒng ký';
-                document.getElementById('email-auth-switch').textContent = isLogin ? 'Chưa có tài khoản? ĐĒng ký' : 'Đã có tài khoản? ĐĒng nhập';
+                document.getElementById('email-auth-title').textContent = isLogin ? 'Đăng nhập bằng username' : 'Tạo tài khoản riêng';
+                document.getElementById('email-auth-submit').textContent = isLogin ? 'Đăng nhập' : 'Đăng ký';
+                document.getElementById('email-auth-switch').textContent = isLogin ? 'Chưa có tài khoản? Đăng ký' : 'Đã có tài khoản? Đăng nhập';
                 document.getElementById('email-auth-password').autocomplete = isLogin ? 'current-password' : 'new-password';
         }
 
@@ -1435,7 +1435,7 @@
             } else {
                 emailButton.onclick = () => openEmailAuthModal('login');
                 emailButton.className = 'flex items-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50';
-                emailButton.innerHTML = '<i class="fa-regular fa-user mr-2 text-sm"></i><span>ĐĒng nhập username</span>';
+                emailButton.innerHTML = '<i class="fa-regular fa-user mr-2 text-sm"></i><span>Đăng nhập username</span>';
             }
         }
 
@@ -2964,13 +2964,14 @@
             archivedTasks.slice().sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0)).forEach(task => {
                 const due = task.dueDate ? new Date(task.dueDate).toLocaleString('vi-VN') : 'Không có hạn';
                 const completed = task.completedAt ? new Date(task.completedAt).toLocaleString('vi-VN') : 'Không rõ';
+                const priority = taskPriorityMeta(task);
                 const attachmentLinks = (task.attachments || []).length
                     ? renderTaskAttachmentLinks(task, false)
                     : '<span class="text-xs text-slate-400">Không có</span>';
                 const row = document.createElement('tr');
                 row.className = 'align-top hover:bg-slate-50/70';
                 row.innerHTML = `
-                    <td class="px-4 py-3 font-semibold text-slate-800">${escapeHtml(task.title || 'Công việc không tên')}<span class="mt-1 block text-xs font-normal text-slate-500">Ưu tiên: ${escapeHtml(task.priority || 'Không đặt')}</span></td>
+                    <td class="px-4 py-3 font-semibold text-slate-800">${escapeHtml(task.title || 'Công việc không tên')}<span class="mt-1 block text-xs font-normal ${priority.classes}">${escapeHtml(priority.label)}</span></td>
                     <td class="max-w-xs px-4 py-3 text-slate-600">${escapeHtml(task.notes || task.description || 'Không có')}</td>
                     <td class="whitespace-nowrap px-4 py-3 text-slate-600">${due}</td>
                     <td class="whitespace-nowrap px-4 py-3 font-medium text-emerald-700">${completed}</td>
@@ -2989,7 +2990,7 @@
             persistTaskState();
             renderTasks();
             renderArchive();
-            switchView('tasks');
+            if (!document.getElementById('overview-view').classList.contains('hidden')) renderDashboard();
         }
 
         function renderSchedule() {
@@ -3040,18 +3041,27 @@
         function dropKanbanTask(event, target) {
             event.preventDefault();
             const taskId = event.dataTransfer.getData('text/plain');
-            const task = tasks.find(item => item.id === taskId);
+            const activeTask = tasks.find(item => item.id === taskId);
+            const archivedTaskIndex = archivedTasks.findIndex(item => item.id === taskId);
+            const task = activeTask || archivedTasks[archivedTaskIndex];
             if (!task) return;
 
             if (target === 'done') {
-                toggleTaskComplete(taskId);
+                if (activeTask) toggleTaskComplete(taskId);
                 return;
+            }
+
+            if (!activeTask) {
+                archivedTasks.splice(archivedTaskIndex, 1);
+                tasks.push({ ...task, completed: false, completedAt: null });
             } else {
                 task.completed = false;
                 task.completedAt = null;
             }
 
-            saveTasks();
+            persistTaskState();
+            renderTasks();
+            renderArchive();
             if (!document.getElementById('overview-view').classList.contains('hidden')) renderDashboard();
         }
 
